@@ -22,6 +22,8 @@ class FrisbeeSim{
     //EVERYTHING IS IN SI UNITS EXCEPT FOR ANGLES. THOSE ARE IN DEGREES
     private static double y0;//initial height
     private static double v0;//magnitude of initial velocity vector
+    private static double vx0;//initial x velocity
+    private static double vy0;//initial y velocity
     private static double a;//angle of attack
     private static double targetX;//how far the target is in the x direction
     private static double[] hitbox;//range of the target in the y direction
@@ -39,10 +41,12 @@ class FrisbeeSim{
     private static final double CD0 = .08;//coefficient used for determining Coefficient of Drag
     private static final double CDA = 2.72;//other coefficient used for determining Coefficient of Drag
     private static final double CLA = 1.4;//other coefficient used for determining Coefficient of Lift
-    private static final double GRAV = -9.80;//gravitational acceleration
+    private static final double GRAV = 9.80;//gravitational acceleration
     private static final double AREA = 0.06131160497;//area of Frisbee top
     private static final double RHO = 1.2041;//air density
     private static final double A0 = -4;//angle at which drag is minimized
+    private static double CX;//x coefficients bundled into one
+    private static double CY;//y coefficients bundled into one
     //Desirables
     private static double maxHeight=0;//Maximum height achieved
     private static double at=0;//distance at which that height is achieved
@@ -83,7 +87,7 @@ class FrisbeeSim{
         vy=v*Math.sin(angle*Math.PI/180);//Initial Y velocity
         
         while(y>0 && x<maxX){//while it hasn't hit the ground and hasn't reached the target X distance
-            double dVY = ( RHO * Math.pow(vx,2) * AREA * CL / 2 / MASS + GRAV ) * EULER_STEP;//change in Y velocity.
+            double dVY = ( RHO * Math.pow(vx,2) * AREA * CL / 2 / MASS - GRAV ) * EULER_STEP;//change in Y velocity.
             double dVX = ( RHO * Math.pow(vx, 2) * AREA * CD / 2 / MASS ) * -EULER_STEP;//change in X velocity.
             vx += dVX;
             vy += dVY;
@@ -111,6 +115,81 @@ class FrisbeeSim{
         }
         else{yErr=0;}//in the hitbox.
         return true; 
+    }
+    
+    /**
+     * Simulate the flight exactly using math!
+     * @param height: height from which the Frisbee is launched
+     * @param v: initial velocity
+     * @param angle: angle at which the Frisbee is launched
+     * @param maxX: wall's x position
+     * @param targetY: goal range
+     * @return: true if the simulation is possible, false otherwise
+     */
+    /*public static boolean exactSimulate(double height, double v, double angle, double maxX, double[] targetY){
+        if(parameterCheck(height, v, angle, maxX, targetY)==false){//is the input bad?
+            return false;//stop
+        }
+        y0 = height;
+        v0 = v;
+        a = angle;
+        targetX = maxX;
+        hitbox = targetY;
+        double CD = CD0 + CDA*Math.pow((angle-A0)*Math.PI/180, 2);//Figures Drag Coefficient
+        double CL = CL0 + CLA*angle*Math.PI/180;//Figures Lift Coefficient
+        //Initial
+        reset();
+        y=height;//frisbee leaves from height
+        vx0=v*Math.cos(angle*Math.PI/180);//Initial X velocity
+        vy0=v*Math.sin(angle*Math.PI/180);//Initial Y velocity
+        
+        CX = ( RHO * AREA * CD / 2 / MASS );//drag coefficient combined with other constants
+        CY = ( RHO * AREA * CL / 2 / MASS );//lift coefficient combined with other constants
+    }*/
+    
+    /**
+     * x velocity as a function of time
+     * @param t: at what time
+     * @param init: initial x velocity
+     * @return: x velocity at that particular time 
+     */
+    public static double xVelocity(double t){
+        if(t<0 || CX<0 || vx0<0)//bad input
+            return -1;
+        return vx0 / (CX*vx0*t + 1);
+    }
+    
+    /**
+     * y velocity as a function of time (depends on x velocity)
+     * @param t: at what time
+     * @return: y velocity at that particular time
+     */
+    public static double yVelocity(double t){
+        return (GRAV/CX/vx0) + (CY*vx0/CX) + vy0 - ( GRAV * ( CX*vx0*t + 1 ) /CX/vx0 ) - ( CY*vx0 / CX / ( CX*vx0*t + 1 ) );
+    }
+    
+    /**
+     * x position as a function of time
+     * @param t: at what time
+     * @return: x position at that time 
+     */
+    public static double xPosition(double t){
+        return (1/CX) * Math.log(CX * vx0 * t + 1);
+    }
+    
+    /**
+     * y position as a function of time. RIP hand and brain
+     * @param t: at what time
+     * @return: y position at that time 
+     */
+    public static double yPosition(double t){
+        double q = 1/CX/vx0;
+        double b = (GRAV/CX/vx0) + (CY*vx0/CX) + vy0;
+        double c = CX*vx0*t + 1;
+        double d = GRAV*Math.pow(c, 2)/2/CX/vx0;
+        double e = CY*vx0*Math.log(c)/CX;
+        double j = (CX*vx0*y0) + (GRAV/2/CX/vx0) - (GRAV/CX/vx0) - (CY*vx0/CX) - vy0;
+        return q * (b*c - d - e + j);
     }
     
     /**
@@ -144,7 +223,7 @@ class FrisbeeSim{
             int j=0;
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("Frisbee.csv")));
             while(y>0){
-                double dVY = (RHO * Math.pow(vx,2) * AREA * CL / 2 / MASS + GRAV) * EULER_STEP;
+                double dVY = (RHO * Math.pow(vx,2) * AREA * CL / 2 / MASS - GRAV) * EULER_STEP;
                 double dVX = ( RHO * Math.pow(vx, 2) * AREA * CD / 2 / MASS ) * -EULER_STEP;
                 vx += dVX;
                 vy += dVY;
