@@ -221,7 +221,7 @@ class FrisbeeSim{
 
         try{
             int j=0;
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("Frisbee.csv")));
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("Euler.csv")));
             while(y>0){
                 double dVY = (RHO * Math.pow(vx,2) * AREA * CL / 2 / MASS - GRAV) * EULER_STEP;
                 double dVX = ( RHO * Math.pow(vx, 2) * AREA * CD / 2 / MASS ) * -EULER_STEP;
