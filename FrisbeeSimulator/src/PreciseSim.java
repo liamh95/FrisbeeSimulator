@@ -22,18 +22,18 @@ public class PreciseSim extends Simulation {
      * @param targetY goal range
      * @param prec size of time increment 
      */
-    public PreciseSim(double height, double v, double angle, double maxX, double[] targetY, double prec){
-        super(height, v, angle, maxX, targetY);
+    public PreciseSim(double height, double v, double ang, double maxX, double[] targetY, double prec){
+        super(height, v, ang, maxX, targetY);
         PRECISION=prec;
     }
     
     @Override
     public boolean simulate(){
-        if(parameterCheck(y0, v0, a, targetX, hitbox)==false){//is the input bad?
+        if(parameterCheck(y0, v0, angle, targetX, hitbox)==false){//is the input bad?
             return false;//stop
         }
-        double CD = CD0 + CDA*Math.pow((a-A0)*Math.PI/180, 2);//Figures Drag Coefficient
-        double CL = CL0 + CLA*a*Math.PI/180;//Figures Lift Coefficient
+        double CD = CD0 + CDA*Math.pow((angle-A0)*Math.PI/180, 2);//Figures Drag Coefficient
+        double CL = CL0 + CLA*angle*Math.PI/180;//Figures Lift Coefficient
         //Initial
         reset();
         CX = ( RHO * AREA * CD / 2 / MASS );//drag coefficient combined with other constants
@@ -55,11 +55,11 @@ public class PreciseSim extends Simulation {
     
     @Override
     public boolean graph(){
-        if(parameterCheck(y0, v0, a, targetX, hitbox)==false){//is the input bad?
+        if(parameterCheck(y0, v0, angle, targetX, hitbox)==false){//is the input bad?
             return false;//stop
         }
-        double CD = CD0 + CDA*Math.pow((a-A0)*Math.PI/180, 2);//Figures Drag Coefficient
-        double CL = CL0 + CLA*a*Math.PI/180;//Figures Lift Coefficient
+        double CD = CD0 + CDA*Math.pow((angle-A0)*Math.PI/180, 2);//Figures Drag Coefficient
+        double CL = CL0 + CLA*angle*Math.PI/180;//Figures Lift Coefficient
         //Initial
         reset();
         CX = ( RHO * AREA * CD / 2 / MASS );//drag coefficient combined with other constants
@@ -137,4 +137,11 @@ public class PreciseSim extends Simulation {
         double j = (CX*vx0*y0) + (GRAV/2/CX/vx0) - (GRAV/CX/vx0) - (CY*vx0/CX) - vy0;
         return q * (b*c - d - e + j);
     }
+    
+    @Override
+    public void print(){
+        System.out.println("Precision Simulation");
+        super.print();
+    }
+    
 }

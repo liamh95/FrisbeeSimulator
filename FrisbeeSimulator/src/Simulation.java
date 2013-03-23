@@ -8,7 +8,7 @@ public abstract class Simulation {
     protected static double v0;                             //magnitude of initial velocity vector
     protected static double vx0;                            //initial x velocity
     protected static double vy0;                            //initial y velocity
-    protected static double a;                              //angle of attack
+    protected static double angle;                          //angle of attack
     protected static double targetX;                        //how far the target is in the x direction
     protected static double[] hitbox;                       //range of the target in the y direction
     protected static double xErr;                           //how off the frisbee lands in the x direction
@@ -42,33 +42,37 @@ public abstract class Simulation {
     protected static final double ANGLE_INC = .15;          //amount by which angle of attack gets increased when solving for angle
     protected static final double X_INC = .1;               //amount by which distance gets increased when solving for distance
     
-    public Simulation(double height, double v, double angle, double maxX, double[] targetY){
+    public Simulation(double height, double v, double ang, double maxX, double[] targetY){
         y0=height;
-        vx0=v*Math.cos(angle*Math.PI/180);
-        vy0=v*Math.sin(angle*Math.PI/180);
+        v0=v;
+        vx0=v*Math.cos(ang*Math.PI/180);
+        vy0=v*Math.sin(ang*Math.PI/180);
+        angle=ang;
         targetX=maxX;
         hitbox=targetY;
     }
     
     public abstract boolean simulate();
     
-    public boolean simulate(double height, double v, double angle, double maxX, double[] targetY){
+    public boolean simulate(double height, double v, double ang, double maxX, double[] targetY){
         y0=height;
-        vx0=v*Math.cos(angle*Math.PI/180);
-        vy0=v*Math.sin(angle*Math.PI/180);
+        v0=v;
+        vx0=v*Math.cos(ang*Math.PI/180);
+        vy0=v*Math.sin(ang*Math.PI/180);
+        angle=ang;
         targetX=maxX;
         hitbox=targetY;
         return simulate();
     }
     
-    public static boolean parameterCheck(double testH, double testV, double testA, double testX, double[] testY){
+    public boolean parameterCheck(double testH, double testV, double testA, double testX, double[] testY){
         if( testH<0 || testV<0 || testA>90 || testA<0 || testX<0 || testY[0]>testY[1] || testY[0]<0 || testY[1]<0 ){
             return false;
         }
         return true;
     }
     
-    public static void reset(){
+    public void reset(){
         x=0;
         maxHeight = 0;
         t=0;
@@ -94,7 +98,24 @@ public abstract class Simulation {
     
     public abstract boolean graph();
     
-        /**
+    /**
+     * Readable version of the next method
+     */
+    public void testAngle(double height, double v, double targX, double[] yBox){
+        System.out.println(height + "m starting height\n" + v + "m/s\nTarget X: " + targX + "m");
+        System.out.println("Y box: " + yBox[0] + "m, " + yBox[1] + "m");
+        double theAngle = solveAngle(height,v,targX,yBox);
+        if(theAngle == -1){
+            System.out.println("Either the target is unreachable or input was bad.");
+        }
+        else{
+        	System.out.println("Estimated Angle: " + theAngle + " degrees\n");
+        	simulate(height, v, theAngle, targX, yBox);
+                print();
+        }
+    }
+    
+   /**
      * Estimates the angle needed to reach the target when launched at the given speed
      * If no solution seems to exist, returns -1
      * Aims for the center of the hitbox to allow for some margin of error.
@@ -145,6 +166,132 @@ public abstract class Simulation {
         else {
             return -1;
         }
+    }
+    
+    /**
+     * Readable version of the next method
+     */
+    public void testVelocity(double height, double ang, double targX, double[] yBox){
+        
+        System.out.println("__________Velocity Solver__________");
+        System.out.println(height + "m starting height\n" + ang + " degrees\nTarget X: " + targX + "m");
+        System.out.println("Y box: " + yBox[0] + "m, " + yBox[1] + "m");
+        double theV = solveVelocity(height, ang, targX, yBox);
+        if(theV == -1){
+            System.out.println("Either the target is unreachable or the input was bad.");
+        }
+        else{
+        	System.out.println("Estimated Velocity: " + theV + " meters per second\n");
+        	simulate(height, theV, ang, targX, yBox );
+        	print();
+        }
+    }
+    
+    /**
+     * Estimates the velocity needed to reach the target when launched at the given angle
+     * If no solution seems to exist, returns -1
+     * @param height: height from which the frisbee is launched
+     * @param a: angle of attack
+     * @param targX: how far away the target is in the x direction
+     * @param yBox: range of target in the y direction
+     * @return: the speed that hits closest to the center of the hitbox
+     */    
+    public double solveVelocity(double height, double a, double targX, double[] yBox){       
+    	if( parameterCheck(height, 5, a, targX, yBox)==false ) {
+            return -1;
+        }
+        double test = MIN_SPEED;//minimum speed
+        yErr = -.5;
+        double bestErr = Double.MAX_VALUE;
+        double bestV = 0;
+        boolean stop = false;
+        double target = (yBox[0]+yBox[1])/2;
+        while(stop==false && test <= MAX_SPEED){//While the given speed doesn't produce a successful hit or the speed hits max speed     
+            simulate(height, test, a, targX, yBox);//simulate throwing the frisbee at that speed
+            if(yErr==0){//Does the speed produce a hit?
+            	if(Math.abs(y-target) < Math.abs(bestErr)){//Was it closer than before?
+                    bestErr=Math.abs(y-target);//this is the closest it's been
+                    bestV=test;//this is the best speed so far
+                }
+            	else{//if it hit but is worse than before, we've it the best speed already
+            		stop=true;
+            	}
+            }
+            test += VEL_INC;//increment test speed
+        }
+        if(bestV>MAX_SPEED){//if max speed couldn't do it, it's not reachable
+            return -1;
+        }
+        return bestV;
+    }
+    
+    /**
+     * Readable version of the next method
+     */
+    public void testDistance(double height, double v, double a, double[] yBox){
+        System.out.println("__________Distance Solver__________");
+        System.out.println(height + "m starting height\n" + v + "m/s\n" + a + " degrees");
+        System.out.println("Y box: " + yBox[0] + "m, " + yBox[1] + "m");
+        double theX = solveDistance(height, v, a, yBox);
+        if(theX == -1){
+            System.out.println("Either the target is unreachable or the input was bad.");
+        }
+        else{
+        	System.out.println("Estimated X Distance: " + theX + " meters\n");
+        	simulate(height, v, a, theX, yBox );
+        	print();
+        }
+    }
+    
+        /**
+     * Estimates the X distance needed to reach the target when launched at the given speed and angle
+     * If no solution seems to exist, returns -1
+     * @param height: height from which the frisbee is launched
+     * @param v: magnitude of initial velocity vector
+     * @param a: angle of attack
+     * @param yBox: range of target in the y direction
+     * @return: the lowest angle of attack needed to hit the target at a given speed
+     */
+    public double solveDistance(double height, double v, double a, double[] yBox){       
+    	if( parameterCheck(height, v, a, 5, yBox)==false ) {
+            return -1;
+        }
+        double test = 1;//stupidly small distance
+        yErr = -.5;
+        double bestErr = Double.MAX_VALUE;
+        boolean stop = false;
+        double bestX = 0;
+        double target = (yBox[0]+yBox[1])/2;
+        while(test <= MAX_DIST && stop==false){//While the best distance hasn't been found or the distance reaches the end of the field    
+            simulate(height, v, a, test, yBox);//simulate throwing the frisbee at that distance
+            if(yErr==0){//Does it hit?
+            	if(Math.abs(y-target) < Math.abs(bestErr)){//better than before?
+                    bestErr=Math.abs(y-target);//this is the closest it's been to the center
+                    bestX=test;//this is the best distance
+                }
+            	else{//If it's hitting but getting further away from the center, the best distance has been found
+            		stop = true;
+            	}
+            }
+            test += X_INC;//increment test distance
+        }
+        if(test > MAX_DIST){
+            return -1;
+        }
+        return bestX;
+    }
+    
+    /**
+     * Readable results from a sim
+     */
+    public void print(){
+        System.out.println(y0 + "m starting height\n" + v0 + "m/s\n" + angle + " degrees\nTarget X: " + targetX + "m");
+        System.out.println("Y box: " + hitbox[0] + "m, " + hitbox[1] + "m\n");
+        System.out.println("__________End__________");
+        System.out.println("(" + x + ", " + y + ")");
+        System.out.println("Error: (" + xErr + ", " + yErr + ")");
+        System.out.println("Max Height: " + maxHeight + "m at " + at + "m");
+        System.out.println( t + "sec\n");
     }
     
 }
