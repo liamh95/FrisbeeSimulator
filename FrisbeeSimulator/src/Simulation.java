@@ -44,9 +44,12 @@ public abstract class Simulation {
     
     public Simulation(double height, double v, double ang, double maxX, double[] targetY){
         y0=height;
+        y=height;
         v0=v;
         vx0=v*Math.cos(ang*Math.PI/180);
+        vx=vx0;
         vy0=v*Math.sin(ang*Math.PI/180);
+        vy=vy0;
         angle=ang;
         targetX=maxX;
         hitbox=targetY;
@@ -56,9 +59,12 @@ public abstract class Simulation {
     
     public boolean simulate(double height, double v, double ang, double maxX, double[] targetY){
         y0=height;
+        y=height;
         v0=v;
         vx0=v*Math.cos(ang*Math.PI/180);
+        vx=vx0;
         vy0=v*Math.sin(ang*Math.PI/180);
+        vy=vy0;
         angle=ang;
         targetX=maxX;
         hitbox=targetY;
@@ -127,9 +133,8 @@ public abstract class Simulation {
      * @return: the angle that gets the frisbee closest to the hitbox center (prefers ascent)
      */
     public double solveAngle(double height, double v, double targX, double[] yBox){
-        if( parameterCheck(height, v, 5, targX, yBox)==false ) {
+        if( parameterCheck(height, v, 5, targX, yBox)==false )//if input is bad, return -1
             return -1;
-        }
         double test = 0;//stupidly small angle
         yErr = -.5;
         double bestYerr = Double.MAX_VALUE;
@@ -160,12 +165,10 @@ public abstract class Simulation {
             }
             test += ANGLE_INC;//increment test angle
         }
-        if(bestA<90) {
-            return bestA;
-        }
-        else {
-            return -1;
-        }
+        if(bestA<90)//Was there a successful angle?
+        	return bestA;
+        else//if not, return -1
+        	return -1;
     }
     
     /**
@@ -243,7 +246,7 @@ public abstract class Simulation {
         }
     }
     
-        /**
+    /**
      * Estimates the X distance needed to reach the target when launched at the given speed and angle
      * If no solution seems to exist, returns -1
      * @param height: height from which the frisbee is launched

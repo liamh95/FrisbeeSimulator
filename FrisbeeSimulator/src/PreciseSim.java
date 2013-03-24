@@ -144,4 +144,22 @@ public class PreciseSim extends Simulation {
         super.print();
     }
     
+    @Override
+    public void testAngle(double height, double v, double targX, double[] yBox){
+    	System.out.println("Angle Solver: Precise");
+    	super.testAngle(height, v, targX, yBox);
+    }
+    
+    @Override
+    public void testVelocity(double height, double ang, double targX, double[] yBox){
+    	System.out.println("Velocity Solver: Precise");
+    	super.testVelocity(height, ang, targX, yBox);
+    }
+    
+    @Override
+    public void testDistance(double height, double v, double ang, double[] yBox){
+    	System.out.println("Distance Solver: Precise");
+    	super.testDistance(height, v, ang, yBox);
+    }
+    
 }

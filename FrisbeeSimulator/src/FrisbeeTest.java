@@ -1,3 +1,14 @@
+/**
+ * EULER
+ *  Y: simulate()
+ *  Y: simulate(params)
+ *  Y: solveAngle(params)
+ *  Y: solveVelocity(params)
+ *  Y: solveDistance(params)
+ * PRECISE
+ *  
+ * @author Liam
+ */
 public class FrisbeeTest{
 	public static void main(String[] args){
 		final double height = 0.762;
@@ -6,9 +17,14 @@ public class FrisbeeTest{
 		final double xDist = 5.4864;
 		final double[] goal = {2.64478, 2.94957};
 
+		EulerSim e = new EulerSim(height, speed, angle, xDist, goal, .001);
+		PreciseSim p = new PreciseSim(height, speed, angle, xDist, goal, .001);
 		FrisbeeSim j = new FrisbeeSim();
-		FrisbeeGraph graph = new FrisbeeGraph("frisbee.csv", FrisbeeSim.graph(height, speed, angle, xDist, goal) );
-		j.angleTest(height, speed, xDist, goal);
-		j.xTest(height, speed, angle, goal);
+		
+		
+                
+		FrisbeeGraph eulerG = new FrisbeeGraph("Euler.csv", e.graph());
+		FrisbeeGraph preciseG = new FrisbeeGraph("Precise.csv", p.graph());
+		
 	}
 }
